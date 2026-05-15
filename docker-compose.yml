@@ -1,0 +1,27 @@
+services:
+  proxy:
+    build:
+      context: .
+      dockerfile: packages/proxy/Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - ./packages/proxy/src:/app/packages/proxy/src
+      - ./packages/shared/src:/app/packages/shared/src
+
+  ops:
+    build:
+      context: .
+      dockerfile: packages/ops/Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_PROXY_URL=http://proxy:3001
+    volumes:
+      - ./packages/ops:/app/packages/ops
+      - ./packages/shared:/app/packages/shared
+    depends_on:
+      - proxy
