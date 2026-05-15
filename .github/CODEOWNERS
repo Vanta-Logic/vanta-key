@@ -1,0 +1,8 @@
+# Global owner
+* @DanielCharis1
+
+# Package-level ownership
+packages/contracts/ @DanielCharis1
+packages/proxy/     @DanielCharis1
+packages/ops/       @DanielCharis1
+packages/shared/    @DanielCharis1
