@@ -1,55 +1,78 @@
 #![no_std]
-use soroban_sdk::{contract, contractimpl, contracttype, Bytes, Env};
+use soroban_sdk::{
+    contract, contractimpl, contracttype, symbol_short, Address, Bytes, Env, Symbol,
+};
 
-/// On-chain representation of an access policy that mirrors the off-chain
-/// [`SecretPolicy`](crate::SecretPolicy) type.
-///
-/// # Fields
-///
-/// * `client_identity` — The Stellar public key (G...) of the client requesting
-///   access. This is verified against the connected wallet address.
-/// * `resource_hash` — SHA-256 hash of the protected resource being accessed.
-/// * `expiration_ledger` — TheStellar ledger sequence number after which this
-///   policy is considered expired. On-chain validation compares this against
-///   the current ledger.
+// Storage keys
+const ADMIN_KEY: Symbol = symbol_short!("ADMIN");
+const INIT_KEY: Symbol = symbol_short!("INIT");
+
+// Event topics
+const TOPIC_STORED: Symbol = symbol_short!("stored");
+const TOPIC_REVOKED: Symbol = symbol_short!("revoked");
+
+/// On-chain representation of an access policy.
 #[contracttype]
+#[derive(Clone)]
 pub struct SecretPolicy {
-    pub client_identity: Bytes,
+    pub client_identity: Address,
     pub resource_hash: Bytes,
     pub expiration_ledger: u32,
 }
 
-/// The main smart contract for the Vanta-Key access-control system.
-///
-/// This contract is deployed on the Stellar network and handles on-chain
-/// verification of access policies. It is designed to be called by the
-/// off-chain proxy service after a policy has been submitted by the admin
-/// dashboard (ops).
 #[contract]
 pub struct VantaKeyContract;
 
 #[contractimpl]
 impl VantaKeyContract {
-    /// Validates a [`SecretPolicy`] against the current ledger state.
-    ///
-    /// # Arguments
-    ///
-    /// * `env` — The Soroban host environment, used to query the current
-    ///   ledger sequence number.
-    /// * `policy` — The access policy to verify.
-    ///
-    /// # Returns
-    ///
-    /// `true` if the policy is still valid (not expired and properly formed),
-    /// `false` otherwise.
-    ///
-    /// # TODO
-    ///
-    /// - Verify the `expiration_ledger` against the current ledger sequence.
-    /// - Validate the `resource_hash` against an on-chain allowlist.
-    /// - Confirm the `client_identity` matches the caller's address.
-    pub fn verify(_env: Env, _policy: SecretPolicy) -> bool {
-        // TODO: implement on-chain validation logic
-        true
+    /// Initialize the contract with an admin address. Panics if already initialized.
+    pub fn initialize(env: Env, admin: Address) {
+        if env.storage().instance().has(&INIT_KEY) {
+            panic!("already initialized");
+        }
+        env.storage().instance().set(&INIT_KEY, &true);
+        env.storage().instance().set(&ADMIN_KEY, &admin);
+    }
+
+    /// Store a policy keyed by its resource_hash. Overwrites any existing policy for the same hash.
+    pub fn store_policy(env: Env, policy: SecretPolicy) {
+        env.storage()
+            .persistent()
+            .set(&policy.resource_hash, &policy);
+        env.events().publish(
+            (TOPIC_STORED, policy.resource_hash.clone()),
+            policy.expiration_ledger,
+        );
+    }
+
+    /// Returns true if a policy for resource_hash exists and has not expired.
+    pub fn verify_stored(env: Env, resource_hash: Bytes) -> bool {
+        match env
+            .storage()
+            .persistent()
+            .get::<Bytes, SecretPolicy>(&resource_hash)
+        {
+            Some(policy) => env.ledger().sequence() <= policy.expiration_ledger,
+            None => false,
+        }
+    }
+
+    /// Revoke a stored policy. Only the admin may call this.
+    pub fn revoke_policy(env: Env, resource_hash: Bytes) {
+        let admin: Address = env.storage().instance().get(&ADMIN_KEY).unwrap();
+        admin.require_auth();
+        env.storage().persistent().remove(&resource_hash);
+        env.events()
+            .publish((TOPIC_REVOKED, resource_hash), true);
+    }
+
+    /// Return the stored policy for resource_hash, or None if not found.
+    pub fn get_policy(env: Env, resource_hash: Bytes) -> Option<SecretPolicy> {
+        env.storage()
+            .persistent()
+            .get::<Bytes, SecretPolicy>(&resource_hash)
     }
 }
+
+#[cfg(test)]
+mod tests;
