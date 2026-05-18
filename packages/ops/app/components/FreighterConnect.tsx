@@ -1,15 +1,13 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { connectWallet, getWalletAddress } from "../../lib/freighter";
+import { connectWallet } from "../../lib/freighter";
 
 interface FreighterConnectProps {
   onAddressChange: (address: string | null) => void;
 }
 
-export default function FreighterConnect({
-  onAddressChange,
-}: FreighterConnectProps) {
+export default function FreighterConnect({ onAddressChange }: FreighterConnectProps) {
   const [address, setAddress] = useState<string | null>(null);
   const [connecting, setConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -22,9 +20,7 @@ export default function FreighterConnect({
       setAddress(addr);
       onAddressChange(addr);
     } catch (e) {
-      setError(
-        e instanceof Error ? e.message : "Failed to connect Freighter wallet",
-      );
+      setError(e instanceof Error ? e.message : "Failed to connect Freighter wallet");
     } finally {
       setConnecting(false);
     }
@@ -37,9 +33,7 @@ export default function FreighterConnect({
 
   return (
     <div className="rounded border border-gray-700 bg-gray-900 p-4">
-      <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-gray-400">
-        Wallet
-      </h2>
+      <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-gray-400">Wallet</h2>
       {address ? (
         <div className="flex items-center justify-between">
           <div>
