@@ -1,11 +1,13 @@
 import Fastify from "fastify";
 import type { SecretPolicy } from "@vanta-logic/shared";
+import { authRoutes } from "./routes/auth";
 
 const app = Fastify({ logger: true });
 
 async function build() {
   const { default: swagger } = await import("@fastify/swagger");
   const { default: swaggerUi } = await import("@fastify/swagger-ui");
+  const { default: jwt } = await import("@fastify/jwt");
 
   await app.register(swagger, {
     openapi: {
@@ -21,6 +23,7 @@ async function build() {
           name: "Policies",
           description: "Access policy verification endpoints",
         },
+        { name: "Auth", description: "JWT token issuance and rotation" },
       ],
     },
   });
@@ -28,6 +31,12 @@ async function build() {
   await app.register(swaggerUi, {
     routePrefix: "/docs",
   });
+
+  await app.register(jwt, {
+    secret: process.env.JWT_SECRET ?? "change-me-in-production",
+  });
+
+  await app.register(authRoutes);
 
   app.get("/health", {
     schema: {
@@ -59,8 +68,7 @@ async function build() {
           },
           expiration_ledger: {
             type: "integer",
-            description:
-              "Ledger sequence number at which the policy expires",
+            description: "Ledger sequence number at which the policy expires",
           },
         },
       },
