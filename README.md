@@ -24,12 +24,12 @@ policies through a modern full-stack dashboard.
 └─────────────────┘
 ```
 
-| Package | Stack | Purpose |
-|---|---|---|
-| `shared` | TypeScript | Shared `SecretPolicy` type consumed by all TS packages |
-| `proxy` | Fastify + TypeScript | Off-chain API engine that bridges the dashboard and the blockchain |
-| `ops` | Next.js 15 + Tailwind | Admin dashboard with Freighter wallet integration |
-| `contracts` | Rust / Soroban | On-chain Stellar smart contract for policy verification |
+| Package     | Stack                 | Purpose                                                            |
+| ----------- | --------------------- | ------------------------------------------------------------------ |
+| `shared`    | TypeScript            | Shared `SecretPolicy` type consumed by all TS packages             |
+| `proxy`     | Fastify + TypeScript  | Off-chain API engine that bridges the dashboard and the blockchain |
+| `ops`       | Next.js 15 + Tailwind | Admin dashboard with Freighter wallet integration                  |
+| `contracts` | Rust / Soroban        | On-chain Stellar smart contract for policy verification            |
 
 ## Quick Start
 
@@ -74,13 +74,13 @@ The dashboard connects to the proxy via `NEXT_PUBLIC_PROXY_URL`
 
 ## Available Scripts
 
-| Command | Description |
-|---|---|
-| `pnpm build` | Build all packages (via Turborepo) |
-| `pnpm dev` | Run all packages in dev mode |
-| `pnpm test` | Run all tests |
-| `pnpm lint` | Lint all TypeScript packages |
-| `pnpm format` | Format code with Prettier |
+| Command       | Description                        |
+| ------------- | ---------------------------------- |
+| `pnpm build`  | Build all packages (via Turborepo) |
+| `pnpm dev`    | Run all packages in dev mode       |
+| `pnpm test`   | Run all tests                      |
+| `pnpm lint`   | Lint all TypeScript packages       |
+| `pnpm format` | Format code with Prettier          |
 
 ## CI/CD
 
@@ -88,6 +88,28 @@ The dashboard connects to the proxy via `NEXT_PUBLIC_PROXY_URL`
 - **Dependabot** — Weekly updates for npm and Cargo dependencies
 - **Pre-commit hooks** — Husky + lint-staged runs ESLint and Prettier
   automatically before every commit
+
+## Testnet Deployment
+
+The Vanta-Key contract is deployed on **Stellar Testnet**:
+
+| Network | Contract ID                                               |
+| ------- | --------------------------------------------------------- |
+| Testnet | `CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCN4` |
+
+Set this as the `CONTRACT_ID` environment variable in the proxy package.
+
+To invoke the contract on Testnet:
+
+```bash
+stellar contract invoke \
+  --id CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCN4 \
+  --network testnet \
+  -- verify \
+  --policy '{"client_identity":"G...","resource_hash":"...","expiration_ledger":1000}'
+```
+
+Full deployment details are in [`packages/contracts/deployments.json`](packages/contracts/deployments.json).
 
 ## License
 
