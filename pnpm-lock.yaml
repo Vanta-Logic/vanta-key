@@ -98,6 +98,10 @@ importers:
         version: 6.0.3
 
   packages/shared:
+    dependencies:
+      zod:
+        specifier: 3.24.4
+        version: 3.24.4
     devDependencies:
       typescript:
         specifier: ^6.0.3
@@ -4245,3 +4249,5 @@ snapshots:
   yn@3.1.1: {}
 
   yocto-queue@0.1.0: {}
+
+  zod@3.24.4: {}

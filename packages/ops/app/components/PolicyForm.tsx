@@ -3,23 +3,25 @@
 import { useState } from "react";
 import type { SecretPolicy } from "@vanta-logic/shared";
 
+const STELLAR_PUBLIC_KEY_REGEX = /^G[A-Z2-7]{55}$/;
+
 interface PolicyFormProps {
   initialClientIdentity?: string;
 }
 
-export default function PolicyForm({
-  initialClientIdentity = "",
-}: PolicyFormProps) {
+export default function PolicyForm({ initialClientIdentity = "" }: PolicyFormProps) {
   const [policy, setPolicy] = useState<SecretPolicy>({
     client_identity: initialClientIdentity,
     resource_hash: "",
     expiration_ledger: 0,
   });
 
-  const handleChange = (
-    field: keyof SecretPolicy,
-    value: string | number,
-  ) => {
+  const clientIdentityError =
+    policy.client_identity.length > 0 && !STELLAR_PUBLIC_KEY_REGEX.test(policy.client_identity)
+      ? "client_identity must be a valid Stellar public key (G...)"
+      : null;
+
+  const handleChange = (field: keyof SecretPolicy, value: string | number) => {
     setPolicy((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -33,9 +35,7 @@ export default function PolicyForm({
       </h2>
       <div className="space-y-3">
         <div>
-          <label className="mb-1 block text-xs text-gray-500">
-            Client Identity
-          </label>
+          <label className="mb-1 block text-xs text-gray-500">Client Identity</label>
           <input
             type="text"
             value={policy.client_identity}
@@ -43,11 +43,12 @@ export default function PolicyForm({
             placeholder="G... or account address"
             className="w-full rounded border border-gray-700 bg-gray-800 px-3 py-2 font-mono text-sm text-gray-100 placeholder-gray-600 focus:border-blue-500 focus:outline-none"
           />
+          {clientIdentityError && (
+            <p className="mt-1 text-xs text-red-400">{clientIdentityError}</p>
+          )}
         </div>
         <div>
-          <label className="mb-1 block text-xs text-gray-500">
-            Resource Hash
-          </label>
+          <label className="mb-1 block text-xs text-gray-500">Resource Hash</label>
           <input
             type="text"
             value={policy.resource_hash}
@@ -57,15 +58,11 @@ export default function PolicyForm({
           />
         </div>
         <div>
-          <label className="mb-1 block text-xs text-gray-500">
-            Expiration Ledger
-          </label>
+          <label className="mb-1 block text-xs text-gray-500">Expiration Ledger</label>
           <input
             type="number"
             value={policy.expiration_ledger}
-            onChange={(e) =>
-              handleChange("expiration_ledger", Number(e.target.value))
-            }
+            onChange={(e) => handleChange("expiration_ledger", Number(e.target.value))}
             placeholder="e.g. 123456"
             className="w-full rounded border border-gray-700 bg-gray-800 px-3 py-2 font-mono text-sm text-gray-100 placeholder-gray-600 focus:border-blue-500 focus:outline-none"
           />
