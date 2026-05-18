@@ -23,3 +23,5 @@ export interface SecretPolicy {
   resource_hash: string;
   expiration_ledger: number;
 }
+
+export { SecretPolicySchema } from "./schemas";
